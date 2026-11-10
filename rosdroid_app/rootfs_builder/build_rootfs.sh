@@ -2,7 +2,6 @@
 set -e
 
 # Configuration
-IMAGE_NAME="rosdroid-rootfs-builder:arm64"
 OUTPUT_TAR="rosdroid-ubuntu26-lyrical-arm64.tar.gz"
 
 echo "=========================================================="
@@ -19,17 +18,14 @@ fi
 echo "Registering QEMU binfmt handlers..."
 docker run --privileged --rm tonistiigi/binfmt --install all || true
 
-# Build docker image
+# Build the ARM64 image and export its root filesystem directly.
 echo "Building ARM64 Docker container..."
-docker buildx build --platform linux/arm64 -t "$IMAGE_NAME" .
+TMP_TAR="${OUTPUT_TAR%.gz}"
+rm -f "$TMP_TAR" "$OUTPUT_TAR"
+docker buildx build --platform linux/arm64 --output "type=tar,dest=${TMP_TAR}" .
 
-# Create container and export filesystem
-echo "Exporting rootfs filesystem..."
-CONTAINER_ID=$(docker create --platform linux/arm64 "$IMAGE_NAME")
-
-# Export and compress directly
-docker export "$CONTAINER_ID" | gzip -9 > "$OUTPUT_TAR"
-docker rm "$CONTAINER_ID"
+echo "Compressing rootfs..."
+gzip -9 "$TMP_TAR"
 
 echo "=========================================================="
 echo " Rootfs archive created successfully: $OUTPUT_TAR"

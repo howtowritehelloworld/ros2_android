@@ -28,7 +28,7 @@ jobs:
       - name: Setup Android NDK & CMake
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.1.8937393" "cmake;3.22.1"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973" "cmake;3.22.1"
 
       - name: Make Gradle Wrapper Executable
         run: |
@@ -74,3 +74,33 @@ jobs:
             
             ### 📥 Installation
             Download `rosdroid-${{ github.ref_name }}.apk` below and install directly onto your `arm64-v8a` Android smartphone.
+
+            The in-app installer downloads `rosdroid-ubuntu26-lyrical-arm64.tar.gz` from this release. That archive is attached by the rootfs job when the image build finishes.
+
+  rootfs:
+    name: Build Lyrical Rootfs
+    runs-on: ubuntu-latest
+    needs: build-release
+    timeout-minutes: 360
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Ubuntu 26.04 + ROS 2 Lyrical rootfs
+        working-directory: rosdroid_app/rootfs_builder
+        run: ./build_rootfs.sh
+
+      - name: Attach rootfs to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: rosdroid_app/rootfs_builder/rosdroid-ubuntu26-lyrical-arm64.tar.gz
