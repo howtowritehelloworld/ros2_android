@@ -53,9 +53,11 @@ RUN mkdir -p /root/uros_ws/src \
     && . install/setup.sh \
     && sed -i 's/--os=ubuntu:noble/--os=ubuntu:resolute/' \
          $(grep -rl -- '--os=ubuntu:noble' /root/uros_ws/install/micro_ros_setup) \
+    && apt-get update \
     && ros2 run micro_ros_setup create_agent_ws.sh \
     && ros2 run micro_ros_setup build_agent.sh \
-    && rm -rf /root/uros_ws/build /root/uros_ws/log
+    && rm -rf /root/uros_ws/build /root/uros_ws/log \
+    && rm -rf /var/lib/apt/lists/*
 
 # 6. Copy and compile patch_getifaddrs
 COPY configs/patch_getifaddrs.c /tmp/patch_getifaddrs.c
