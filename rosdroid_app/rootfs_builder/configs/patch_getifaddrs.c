@@ -716,9 +716,10 @@ int getifaddrs(struct ifaddrs **ifap)
     struct ifaddrs *head = NULL, *prev = NULL;
 
     const char *paths[] = {
-        "/etc/cyclonedds/ifaddrs.txt",
+        "/etc/fastdds/ifaddrs.txt",
         "/etc/ifaddrs.txt",
-        "/data/data/org.botforge.rosdroid/files/rootfs/ubuntu/etc/cyclonedds/ifaddrs.txt",
+        "/data/data/org.botforge.rosdroid/files/rootfs/ubuntu/etc/fastdds/ifaddrs.txt",
+        "/etc/cyclonedds/ifaddrs.txt",
         NULL
     };
 

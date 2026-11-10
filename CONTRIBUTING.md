@@ -54,7 +54,7 @@ Documentation improvements, translation, tutorials, and robotics project showcas
 ## Development Setup
 
 ### Prerequisites
-- **Operating System**: Linux (Ubuntu 22.04 / 24.04 recommended) or macOS
+- **Operating System**: Linux (Ubuntu 26.04 recommended) or macOS
 - **Java Development Kit**: OpenJDK 17 (`sudo apt install openjdk-17-jdk`)
 - **Android SDK & NDK**: Command-line tools or Android Studio Ladybug/Koala
 - **CMake**: Version 3.22.1+

@@ -13,8 +13,8 @@ A clear and concise description of what the bug is.
 - **Phone Model**: (e.g., Pixel 7, Samsung S22, Xiaomi Redmi Note 10)
 - **Android Version**: (e.g., Android 13 / 14)
 - **Rosdroid App Version**: (e.g., v1.0.0)
-- **ROS 2 Distribution**: Jazzy Jalisco
-- **Host PC OS & Distro**: (e.g., Ubuntu 24.04, Arch Linux)
+- **ROS 2 Distribution**: Lyrical Luth
+- **Host PC OS & Distro**: (e.g., Ubuntu 26.04, Arch Linux)
 
 **Steps to Reproduce**
 1. Open Rosdroid app

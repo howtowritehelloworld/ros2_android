@@ -78,7 +78,7 @@ fun DashboardScreen(
                     color = Color.White
                 )
                 Text(
-                    text = "● Online & Active (ROS 2 Jazzy)",
+                    text = "● Online & Active (ROS 2 Lyrical)",
                     fontSize = 13.sp,
                     color = Color(0xFF00E676)
                 )

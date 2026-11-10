@@ -44,7 +44,7 @@ class PRootManager(private val context: Context) {
     }
 
     /**
-     * Builds a ProcessBuilder configured with PRoot virtualization and ROS 2 Jazzy environment.
+     * Builds a ProcessBuilder configured with PRoot virtualization and ROS 2 Lyrical environment.
      */
     fun buildProotProcess(command: String = "", domainId: Int = 156, sourceRos: Boolean = true, rawArgs: List<String>? = null): ProcessBuilder {
         val nativeDir = context.applicationInfo.nativeLibraryDir
@@ -88,16 +88,18 @@ class PRootManager(private val context: Context) {
                 add(getGuestShell())
                 add("-c")
                 val preamble = if (sourceRos) {
-                    "export PATH=/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\$PATH " +
+                    "export PATH=/opt/ros/lyrical/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\$PATH " +
                     "HOME=/root USER=root HOSTNAME=rosdroid TERM=xterm-256color LANG=C.UTF-8 LC_ALL=C.UTF-8 " +
                     "PYTHONUTF8=1 PYTHONIOENCODING=utf-8 " +
-                    "LD_LIBRARY_PATH=/opt/ros/jazzy/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/root/rio_ws/install/rio_interfaces/lib:/home/rosdroid/rosdroid_ws/install/test_pubsub/lib:/home/robot/rosdroid_ws/install/test_pubsub/lib:\$LD_LIBRARY_PATH " +
-                    "AMENT_PREFIX_PATH=/opt/ros/jazzy:/root/rio_ws/install/rio_interfaces:/home/rosdroid/rosdroid_ws/install/test_pubsub:/home/robot/rosdroid_ws/install/test_pubsub:\$AMENT_PREFIX_PATH " +
-                    "PYTHONPATH=/opt/ros/jazzy/local/lib/python3.12/dist-packages:/opt/ros/jazzy/lib/python3.12/site-packages:/opt/ros/jazzy/local/lib/python3.10/dist-packages:/opt/ros/jazzy/lib/python3.10/site-packages:/root/rio_ws/install/rio_interfaces/local/lib/python3.10/dist-packages:/home/rosdroid/rosdroid_ws/install/test_pubsub/local/lib/python3.10/dist-packages:/home/robot/rosdroid_ws/install/test_pubsub/local/lib/python3.10/dist-packages:\$PYTHONPATH " +
-                    "ROS_DISTRO=jazzy ROS_VERSION=2 ROS_PYTHON_VERSION=3 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp " +
-                    "CYCLONEDDS_URI=/etc/cyclonedds/cyclonedds.xml " +
+                    "ROS_DISTRO=lyrical ROS_VERSION=2 ROS_PYTHON_VERSION=3 RMW_IMPLEMENTATION=rmw_fastrtps_cpp " +
+                    "FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml " +
                     "LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so " +
-                    "ROS_DOMAIN_ID=$domainId ROS_LOCALHOST_ONLY=0; "
+                    "ROS_DOMAIN_ID=$domainId ROS_LOCALHOST_ONLY=0; " +
+                    "source /opt/ros/lyrical/setup.bash 2>/dev/null || true; " +
+                    "source /root/uros_ws/install/setup.bash 2>/dev/null || true; " +
+                    "source /root/rio_ws/install/setup.bash 2>/dev/null || true; " +
+                    "source /home/rosdroid/rosdroid_ws/install/setup.bash 2>/dev/null || true; " +
+                    "source /home/robot/rosdroid_ws/install/setup.bash 2>/dev/null || true; "
                 } else {
                     "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\$PATH " +
                     "HOME=/root USER=root HOSTNAME=rosdroid TERM=xterm-256color LANG=C.UTF-8 LC_ALL=C.UTF-8 " +
@@ -225,7 +227,7 @@ class PRootManager(private val context: Context) {
     fun startMicroRosAgent(port: Int = 8888, domainId: Int = 156): Process? {
         stopMicroRosAgent()
         return try {
-            Log.i(TAG, "Starting Micro-ROS agent on UDP port $port (ROS 2 Jazzy)...")
+            Log.i(TAG, "Starting Micro-ROS agent on UDP port $port (ROS 2 Lyrical)...")
             val args = listOf("/bin/bash", "/usr/local/bin/ros2", "run", "micro_ros_agent", "micro_ros_agent", "udp4", "--port", "$port", "-v4")
             microRosProcess = buildProotProcess(rawArgs = args, domainId = domainId).start()
             drainStream(microRosProcess, "MicroRos")

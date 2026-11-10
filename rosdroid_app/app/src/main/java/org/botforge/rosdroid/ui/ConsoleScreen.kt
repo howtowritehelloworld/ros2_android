@@ -82,7 +82,7 @@ private val ROS_KEYWORDS = listOf(
     "sensor_msgs/msg/Imu", "sensor_msgs/msg/BatteryState",
     "sensor_msgs/msg/CompressedImage", "std_msgs/msg/Bool",
     "std_msgs/msg/String", "geometry_msgs/msg/Twist",
-    "source /opt/ros/jazzy/setup.bash", "export ROS_DOMAIN_ID=156",
+    "source /opt/ros/lyrical/setup.bash", "export ROS_DOMAIN_ID=156",
     "uname -a", "ps aux", "clear"
 )
 

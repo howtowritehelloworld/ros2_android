@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Rosdroid ROS2 Robot Node
-Bridges Android hardware sensors, camera, voice, TTS, and biometrics to ROS 2 Jazzy.
+Bridges Android hardware sensors, camera, voice, TTS, and biometrics to ROS 2 Lyrical.
 Implements the exact ROS interfaces from rio_mini_ros2.
 """
 

@@ -32,7 +32,7 @@ if [ "$EUID" -eq 0 ]; then
     error_exit "Please do not run as root"
 fi
 
-echo -e "${GREEN}Starting installation of Ubuntu and ROS 2 Jazzy on Termux...${NC}"
+echo -e "${GREEN}Starting Termux host packages for Rosdroid...${NC}"
 
 # Install neofetch and show system info
 info_message "Installing neofetch.."
@@ -55,11 +55,5 @@ passwd || error_exit "Failed to set password"
 info_message "Installing net-tools..."
 pkg install net-tools -y || error_exit "Failed to install net-tools"
 
-# Download and setup Ubuntu 22.04
-info_message "Downloading Ubuntu 22.04 setup script..."
-wget https://raw.githubusercontent.com/AndronixApp/AndronixOrigin/master/Installer/Ubuntu22/ubuntu22.sh -O ubuntu22.sh || error_exit "Failed to download Ubuntu setup script"
-chmod +x ubuntu22.sh || error_exit "Failed to run Ubuntu setup script"
-./ubuntu22.sh || error_exit "Failed to run Ubuntu setup script"
-
-# Start Ubuntu environment
-info_message "To start the Ubuntu environment, run './start-ubuntu22.sh' in your terminal."
+info_message "The phone guest is Ubuntu 26.04 + ROS 2 Lyrical, built by rosdroid_app/rootfs_builder/build_rootfs.sh."
+info_message "Copy rosdroid-ubuntu26-lyrical-arm64.tar.gz onto the phone and use the app installer."

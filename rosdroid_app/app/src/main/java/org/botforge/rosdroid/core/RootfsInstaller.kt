@@ -52,10 +52,13 @@ class RootfsInstaller(private val context: Context) {
             if (extDir != null) {
                 candidates.add(File(extDir, "rosdroid_rootfs.tar"))
                 candidates.add(File(extDir, "rosdroid_rootfs.tar.gz"))
+                candidates.add(File(extDir, "rosdroid-ubuntu26-lyrical-arm64.tar.gz"))
             }
         } catch (ignored: Exception) {}
         candidates.add(File("/sdcard/Download/rosdroid_rootfs.tar"))
+        candidates.add(File("/sdcard/Download/rosdroid-ubuntu26-lyrical-arm64.tar.gz"))
         candidates.add(File("/storage/emulated/0/Download/rosdroid_rootfs.tar"))
+        candidates.add(File("/storage/emulated/0/Download/rosdroid-ubuntu26-lyrical-arm64.tar.gz"))
         candidates.add(File("/sdcard/rosdroid_rootfs.tar"))
 
         for (candidate in candidates) {
@@ -88,7 +91,7 @@ class RootfsInstaller(private val context: Context) {
                         emit(InstallState.Extracting(entryName, count))
                     }
                 }
-                emit(InstallState.Configuring("Configuring DNS, CycloneDDS, and Native Bridges..."))
+                emit(InstallState.Configuring("Configuring DNS, Fast DDS, and Native Bridges..."))
                 setupRootfsConfigurations()
                 emit(InstallState.Completed)
                 return@flow
@@ -148,7 +151,7 @@ class RootfsInstaller(private val context: Context) {
             }
 
             // Step 3: Configure
-            emit(InstallState.Configuring("Configuring DNS, CycloneDDS, and Native Bridges..."))
+            emit(InstallState.Configuring("Configuring DNS, Fast DDS, and Native Bridges..."))
             setupRootfsConfigurations()
 
             // Clean up cache
@@ -299,40 +302,7 @@ class RootfsInstaller(private val context: Context) {
             try { Os.symlink("/bin/true", f.absolutePath) } catch (e: Exception) {}
         }
 
-        // Migrate /opt/ros/humble to /opt/ros/jazzy if present
-        try {
-            val humbleRos = File(rootfsDir, "opt/ros/humble")
-            val jazzyRos = File(rootfsDir, "opt/ros/jazzy")
-            if (humbleRos.exists() && !jazzyRos.exists()) {
-                humbleRos.renameTo(jazzyRos)
-            } else if (humbleRos.exists() && jazzyRos.exists()) {
-                humbleRos.deleteRecursively()
-            }
-            if (jazzyRos.exists()) {
-                listOf("local_setup.sh", "setup.sh", "local_setup.bash", "setup.bash").forEach { name ->
-                    val f = File(jazzyRos, name)
-                    if (f.exists()) {
-                        val txt = f.readText()
-                        if (txt.contains("humble")) {
-                            f.writeText(txt.replace("/opt/ros/humble", "/opt/ros/jazzy"))
-                        }
-                    }
-                }
-                val envDir = File(jazzyRos, "share/ros_environment/environment")
-                if (envDir.exists()) {
-                    envDir.listFiles()?.forEach { f ->
-                        if (f.isFile) {
-                            val txt = f.readText()
-                            if (txt.contains("humble")) {
-                                f.writeText(txt.replace("humble", "jazzy"))
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Notice: ROS Distro migration to jazzy: ${e.message}")
-        }
+        // The guest must already be Ubuntu 26.04 / ROS 2 Lyrical. Humble and Jazzy trees are not renamed in place.
 
         // Global ros2 executable wrapper in /usr/local/bin and /usr/bin
         val ros2Wrapper = File(rootfsDir, "usr/local/bin/ros2").apply { parentFile?.mkdirs() }
@@ -345,22 +315,18 @@ class RootfsInstaller(private val context: Context) {
             export PYTHONIOENCODING=utf-8
             export LC_ALL=C.UTF-8
             export LANG=C.UTF-8
-            export ROS_DISTRO=jazzy
-            export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+            export ROS_DISTRO=lyrical
+            export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
             export ROS_DOMAIN_ID=156
             export ROS_LOCALHOST_ONLY=0
-            export CYCLONEDDS_URI=/etc/cyclonedds/cyclonedds.xml
+            export FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml
             export LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so
-            export LD_LIBRARY_PATH=/opt/ros/jazzy/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/root/rio_ws/install/rio_interfaces/lib:/home/robot/rosdroid_ws/install/test_pubsub/lib:${'$'}{LD_LIBRARY_PATH:-}
-            export AMENT_PREFIX_PATH=/opt/ros/jazzy:/root/rio_ws/install/rio_interfaces:/home/robot/rosdroid_ws/install/test_pubsub:${'$'}{AMENT_PREFIX_PATH:-}
-            export PYTHONPATH=/opt/ros/jazzy/local/lib/python3.12/dist-packages:/opt/ros/jazzy/lib/python3.12/site-packages:/opt/ros/jazzy/local/lib/python3.10/dist-packages:/opt/ros/jazzy/lib/python3.10/site-packages:/root/rio_ws/install/rio_interfaces/local/lib/python3.10/dist-packages:/home/robot/rosdroid_ws/install/test_pubsub/local/lib/python3.10/dist-packages
-            if [ -n "${'$'}{PYTHONPATH_EXTRA:-}" ]; then
-                export PYTHONPATH="${'$'}PYTHONPATH:${'$'}PYTHONPATH_EXTRA"
-            fi
-            source /opt/ros/jazzy/setup.bash 2>/dev/null || true
+            source /opt/ros/lyrical/setup.bash 2>/dev/null || true
+            source /root/uros_ws/install/setup.bash 2>/dev/null || true
             source /root/rio_ws/install/setup.bash 2>/dev/null || true
             source /home/robot/rosdroid_ws/install/setup.bash 2>/dev/null || true
-            exec /opt/ros/jazzy/bin/ros2 "${'$'}@"
+            source /home/rosdroid/rosdroid_ws/install/setup.bash 2>/dev/null || true
+            exec /opt/ros/lyrical/bin/ros2 "${'$'}@"
             """.trimIndent() + "\n"
         )
         ros2Wrapper.setReadable(true, false)
@@ -381,18 +347,17 @@ class RootfsInstaller(private val context: Context) {
             export PYTHONIOENCODING=utf-8
             export LC_ALL=C.UTF-8
             export LANG=C.UTF-8
-            export ROS_DISTRO=jazzy
-            export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+            export ROS_DISTRO=lyrical
+            export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
             export ROS_DOMAIN_ID=156
             export ROS_LOCALHOST_ONLY=0
-            export CYCLONEDDS_URI=/etc/cyclonedds/cyclonedds.xml
+            export FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml
             export LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so
-            export LD_LIBRARY_PATH=/opt/ros/jazzy/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/root/rio_ws/install/rio_interfaces/lib:/home/robot/rosdroid_ws/install/test_pubsub/lib:${'$'}{LD_LIBRARY_PATH:-}
-            export AMENT_PREFIX_PATH=/opt/ros/jazzy:/root/rio_ws/install/rio_interfaces:/home/robot/rosdroid_ws/install/test_pubsub:${'$'}{AMENT_PREFIX_PATH:-}
-            export PYTHONPATH=/opt/ros/jazzy/local/lib/python3.12/dist-packages:/opt/ros/jazzy/lib/python3.12/site-packages:/opt/ros/jazzy/local/lib/python3.10/dist-packages:/opt/ros/jazzy/lib/python3.10/site-packages:/root/rio_ws/install/rio_interfaces/local/lib/python3.10/dist-packages:/home/robot/rosdroid_ws/install/test_pubsub/local/lib/python3.10/dist-packages
-            source /opt/ros/jazzy/setup.bash 2>/dev/null || true
+            source /opt/ros/lyrical/setup.bash 2>/dev/null || true
+            source /root/uros_ws/install/setup.bash 2>/dev/null || true
             source /root/rio_ws/install/setup.bash 2>/dev/null || true
             source /home/robot/rosdroid_ws/install/setup.bash 2>/dev/null || true
+            source /home/rosdroid/rosdroid_ws/install/setup.bash 2>/dev/null || true
             if [ -f /opt/rosdroid/rosdroid_node.py ]; then
                 exec /usr/bin/python3 /opt/rosdroid/rosdroid_node.py "${'$'}@"
             elif [ -f /root/rosdroid_node.py ]; then
@@ -449,9 +414,10 @@ class RootfsInstaller(private val context: Context) {
             """
             PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             HOSTNAME=rosdroid
-            ROS_DISTRO=jazzy
+            ROS_DISTRO=lyrical
             ROS_DOMAIN_ID=156
-            RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+            RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+            FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml
             """.trimIndent() + "\n"
         )
         envFile.setReadable(true, false)
@@ -462,32 +428,31 @@ class RootfsInstaller(private val context: Context) {
         ldSoPreload.setReadable(true, false)
 
         val shellInit = """
-            export PATH=/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${'$'}PATH
+            export PATH=/opt/ros/lyrical/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${'$'}PATH
             export HOSTNAME=rosdroid
-            export ROS_DISTRO=jazzy
+            export ROS_DISTRO=lyrical
             export ROS_VERSION=2
             export ROS_PYTHON_VERSION=3
             export ROS_DOMAIN_ID=156
-            export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-            export CYCLONEDDS_URI=/etc/cyclonedds/cyclonedds.xml
+            export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+            export FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml
             export LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so
-            export LD_LIBRARY_PATH=/opt/ros/jazzy/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/root/rio_ws/install/rio_interfaces/lib:/home/robot/rosdroid_ws/install/test_pubsub/lib:${'$'}{LD_LIBRARY_PATH:-}
-            export AMENT_PREFIX_PATH=/opt/ros/jazzy:/root/rio_ws/install/rio_interfaces:/home/robot/rosdroid_ws/install/test_pubsub:${'$'}{AMENT_PREFIX_PATH:-}
-            export PYTHONPATH=/opt/ros/jazzy/local/lib/python3.12/dist-packages:/opt/ros/jazzy/lib/python3.12/site-packages:/opt/ros/jazzy/local/lib/python3.10/dist-packages:/opt/ros/jazzy/lib/python3.10/site-packages:/root/rio_ws/install/rio_interfaces/local/lib/python3.10/dist-packages:/home/robot/rosdroid_ws/install/test_pubsub/local/lib/python3.10/dist-packages:${'$'}{PYTHONPATH:-}
-            source /opt/ros/jazzy/setup.bash 2>/dev/null || true
+            source /opt/ros/lyrical/setup.bash 2>/dev/null || true
+            source /root/uros_ws/install/setup.bash 2>/dev/null || true
             source /root/rio_ws/install/setup.bash 2>/dev/null || true
             source /home/robot/rosdroid_ws/install/setup.bash 2>/dev/null || true
+            source /home/rosdroid/rosdroid_ws/install/setup.bash 2>/dev/null || true
             export PS1='${'$'}{debian_chroot:+(${'$'}debian_chroot)}\u@rosdroid:\w\$ '
         """.trimIndent() + "\n"
 
-        // Symlink Cyclone DDS multiarch libraries directly into /opt/ros/jazzy/lib
+        // Symlink multiarch libraries into /opt/ros/lyrical/lib so guests can find Fast DDS.
         try {
-            val jazzyLib = File(rootfsDir, "opt/ros/jazzy/lib")
-            val jazzyArchLib = File(jazzyLib, "aarch64-linux-gnu")
-            if (jazzyArchLib.exists()) {
-                jazzyArchLib.listFiles()?.forEach { libFile ->
+            val rosLib = File(rootfsDir, "opt/ros/lyrical/lib")
+            val rosArchLib = File(rosLib, "aarch64-linux-gnu")
+            if (rosArchLib.exists()) {
+                rosArchLib.listFiles()?.forEach { libFile ->
                     if (libFile.name.endsWith(".so") || libFile.name.contains(".so.")) {
-                        val target = File(jazzyLib, libFile.name)
+                        val target = File(rosLib, libFile.name)
                         if (!target.exists()) {
                             try { Os.symlink(libFile.absolutePath, target.absolutePath) } catch (ignored: Exception) {}
                         }
@@ -495,7 +460,7 @@ class RootfsInstaller(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Notice: Cyclone DDS multiarch symlink: ${e.message}")
+            Log.w(TAG, "Notice: Fast DDS multiarch symlink: ${e.message}")
         }
 
         val profileInit = File(etcDir, "profile.d/rosdroid.sh").apply { parentFile?.mkdirs() }
@@ -506,9 +471,7 @@ class RootfsInstaller(private val context: Context) {
         val rootBashrc = File(rootfsDir, "root/.bashrc").apply { parentFile?.mkdirs() }
         if (rootBashrc.exists()) {
             val oldTxt = rootBashrc.readText()
-            if (oldTxt.contains("ROS_DISTRO=humble")) {
-                rootBashrc.writeText(oldTxt.replace("humble", "jazzy"))
-            } else if (!oldTxt.contains("ROS_DISTRO=jazzy")) {
+            if (!oldTxt.contains("ROS_DISTRO=lyrical")) {
                 rootBashrc.appendText("\n" + shellInit)
             }
         } else {
@@ -520,9 +483,7 @@ class RootfsInstaller(private val context: Context) {
             val userBashrc = File(rootfsDir, "$homePath/.bashrc").apply { parentFile?.mkdirs() }
             if (userBashrc.exists()) {
                 val oldTxt = userBashrc.readText()
-                if (oldTxt.contains("ROS_DISTRO=humble")) {
-                    userBashrc.writeText(oldTxt.replace("humble", "jazzy"))
-                } else if (!oldTxt.contains("ROS_DISTRO=jazzy")) {
+                if (!oldTxt.contains("ROS_DISTRO=lyrical")) {
                     userBashrc.appendText("\n" + shellInit)
                 }
             } else {
@@ -641,8 +602,7 @@ class RootfsInstaller(private val context: Context) {
         // Patch ROS 2 CLI strategy to disable daemon in PRoot and avoid empty node name faults
         try {
             val strategyFiles = listOf(
-                File(rootfsDir, "opt/ros/jazzy/lib/python3.10/site-packages/ros2cli/node/strategy.py"),
-                File(rootfsDir, "opt/ros/jazzy/lib/python3.12/site-packages/ros2cli/node/strategy.py")
+                File(rootfsDir, "opt/ros/lyrical/lib/python3.14/site-packages/ros2cli/node/strategy.py")
             )
             for (strategyFile in strategyFiles) {
                 if (strategyFile.exists()) {
@@ -659,7 +619,7 @@ class RootfsInstaller(private val context: Context) {
         // Fast-path accelerator for ROS 2 CLI graph introspection (topic list, node list, service list)
         // Bypasses heavy ros2cli plugin reflection overhead in PRoot, reducing latency from ~5.2s down to ~0.9s
         try {
-            val ros2Bin = File(rootfsDir, "opt/ros/jazzy/bin/ros2")
+            val ros2Bin = File(rootfsDir, "opt/ros/lyrical/bin/ros2")
             if (ros2Bin.exists()) {
                 val current = ros2Bin.readText()
                 if (!current.contains("Ultra-fast path for graph introspection")) {
@@ -686,7 +646,7 @@ if len(args) >= 3 and '-h' not in args and '--help' not in args:
 
         domain_id = int(os.environ.get('ROS_DOMAIN_ID', 156))
         ctx = CContext([], domain_id)
-        node = CNode('_fast_ros2_cli', '', ctx, [], True, False)
+        node = CNode('_fast_ros2_cli', '', ctx, [], True, False, None)
 
         if verb_group == 'topic':
             include_hidden = '--include-hidden-topics' in args
@@ -772,31 +732,11 @@ if len(args) >= 3 and '-h' not in args and '--help' not in args:
         sys.stdout.flush()
         os._exit(0)
 
-# Fallback to standard ros2cli entry point for all other commands
-import re
-__requires__ = 'ros2cli==0.18.20'
-try:
-    from importlib.metadata import distribution
-except ImportError:
-    try:
-        from importlib_metadata import distribution
-    except ImportError:
-        from pkg_resources import load_entry_point
-
-def importlib_load_entry_point(spec, group, name):
-    dist_name, _, _ = spec.partition('==')
-    matches = (
-        entry_point
-        for entry_point in distribution(dist_name).entry_points
-        if entry_point.group == group and entry_point.name == name
-    )
-    return next(matches).load()
-
-globals().setdefault('load_entry_point', importlib_load_entry_point)
-
+# Fallback to the installed ros2cli console script for every other command.
+from importlib.metadata import entry_points
+_ros2_ep = next(ep for ep in entry_points(group='console_scripts') if ep.name == 'ros2')
 if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
-    sys.exit(load_entry_point('ros2cli==0.18.20', 'console_scripts', 'ros2')())
+    sys.exit(_ros2_ep.load()())
 """.trimIndent()
                     ros2Bin.writeText(fastRos2Script)
                     ros2Bin.setExecutable(true, false)
@@ -806,39 +746,69 @@ if __name__ == '__main__':
             Log.w(TAG, "Notice setting up fast ros2 CLI: ${e.message}")
         }
 
-        // Setup cyclonedds config and ifaddrs list
-        val cycloneddsDir = File(rootfsDir, "etc/cyclonedds").apply { mkdirs(); setReadable(true, false) }
-        val cycloneddsFile = File(cycloneddsDir, "cyclonedds.xml")
-        cycloneddsFile.writeText(
+        // Fast DDS 3 phone profile. UDP only, because shared memory does not work under PRoot.
+        val fastddsDir = File(rootfsDir, "etc/fastdds").apply { mkdirs(); setReadable(true, false) }
+        val fastddsFile = File(fastddsDir, "phone.xml")
+        fastddsFile.writeText(
             """
             <?xml version="1.0" encoding="UTF-8" ?>
-            <CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                <Domain id="any">
-                    <General>
-                        <Interfaces>
-                            <NetworkInterface name="wlan0"/>
-                        </Interfaces>
-                        <AllowMulticast>true</AllowMulticast>
-                    </General>
-                    <Discovery>
-                        <ParticipantIndex>auto</ParticipantIndex>
-                        <MaxAutoParticipantIndex>120</MaxAutoParticipantIndex>
-                        <Peers>
-                            <Peer address="239.255.0.1"/>
-                            <Peer address="127.0.0.1"/>
-                            <Peer address="255.255.255.255"/>
-                            <Peer address="192.168.0.255"/>
-                            <Peer address="192.168.0.101"/>
-                        </Peers>
-                    </Discovery>
-                </Domain>
-            </CycloneDDS>
+            <dds xmlns="http://www.eprosima.com/XMLSchemas/fastDDS_Profiles">
+                <profiles>
+                    <transport_descriptors>
+                        <transport_descriptor>
+                            <transport_id>udp_only</transport_id>
+                            <type>UDPv4</type>
+                            <interfaces>
+                                <allowlist>
+                                    <interface name="wlan0"/>
+                                </allowlist>
+                            </interfaces>
+                        </transport_descriptor>
+                    </transport_descriptors>
+                    <participant profile_name="rosdroid_phone" is_default_profile="true">
+                        <rtps>
+                            <useBuiltinTransports>false</useBuiltinTransports>
+                            <userTransports>
+                                <transport_id>udp_only</transport_id>
+                            </userTransports>
+                            <builtin>
+                                <initialPeersList>
+                                    <locator>
+                                        <udpv4>
+                                            <address>192.168.0.101</address>
+                                        </udpv4>
+                                    </locator>
+                                    <locator>
+                                        <udpv4>
+                                            <address>192.168.0.255</address>
+                                        </udpv4>
+                                    </locator>
+                                </initialPeersList>
+                            </builtin>
+                        </rtps>
+                    </participant>
+                    <data_writer profile_name="no_shm" is_default_profile="true">
+                        <qos>
+                            <data_sharing>
+                                <kind>OFF</kind>
+                            </data_sharing>
+                        </qos>
+                    </data_writer>
+                    <data_reader profile_name="no_shm" is_default_profile="true">
+                        <qos>
+                            <data_sharing>
+                                <kind>OFF</kind>
+                            </data_sharing>
+                        </qos>
+                    </data_reader>
+                </profiles>
+            </dds>
             """.trimIndent() + "\n"
         )
-        cycloneddsFile.setReadable(true, false)
+        fastddsFile.setReadable(true, false)
 
         try {
-            val ifaddrsFile = File(cycloneddsDir, "ifaddrs.txt")
+            val ifaddrsFile = File(fastddsDir, "ifaddrs.txt")
             val ifaceSb = StringBuilder()
             ifaceSb.append("lo 127.0.0.1 255.0.0.0\n")
             try {

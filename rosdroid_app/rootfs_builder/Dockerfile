@@ -1,10 +1,11 @@
-# Multi-architecture Dockerfile to build Rosdroid ARM64 Ubuntu 24.04 + ROS 2 Jazzy Rootfs
-FROM --platform=linux/arm64 ubuntu:24.04
+# Multi-architecture Dockerfile to build Rosdroid ARM64 Ubuntu 26.04 + ROS 2 Lyrical Rootfs
+FROM --platform=linux/arm64 ubuntu:26.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
-ENV ROS_DISTRO=jazzy
+ENV ROS_DISTRO=lyrical
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
 
 # 1. Base packages & locales
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -25,14 +26,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Add ROS 2 Jazzy Repository
+# 2. Add ROS 2 Lyrical repository (Ubuntu 26.04 Resolute)
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
-    && echo "deb [arch=arm64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu noble main" > /etc/apt/sources.list.d/ros2.list
+    && echo "deb [arch=arm64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu resolute main" > /etc/apt/sources.list.d/ros2.list
 
-# 3. Install ROS 2 Jazzy minimal & CycloneDDS
+# 3. Install ROS 2 Lyrical base. ros-base already depends on Fast DDS 3 (rmw_fastrtps_cpp).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-jazzy-ros-base \
-    ros-jazzy-rmw-cyclonedds-cpp \
+    ros-lyrical-ros-base \
+    ros-lyrical-rmw-fastrtps-cpp \
     ros-dev-tools \
     python3-colcon-common-extensions \
     python3-rosdep \
@@ -45,9 +46,9 @@ RUN rosdep init || true \
 # 5. Build Micro-ROS Agent
 RUN mkdir -p /root/uros_ws/src \
     && cd /root/uros_ws/src \
-    && git clone -b jazzy https://github.com/micro-ROS/micro_ros_setup.git \
+    && git clone -b lyrical https://github.com/micro-ROS/micro_ros_setup.git \
     && cd /root/uros_ws \
-    && . /opt/ros/jazzy/setup.sh \
+    && . /opt/ros/lyrical/setup.sh \
     && colcon build \
     && . install/setup.sh \
     && ros2 run micro_ros_setup create_agent_ws.sh \
@@ -70,12 +71,14 @@ RUN useradd -m -s /bin/bash -u 1000 rosdroid \
     && echo "robot ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
     && ln -s /home/rosdroid /home/robot_alias
 
-# 8. Setup default environment
-COPY configs/cyclonedds.xml /etc/cyclonedds/cyclonedds.xml
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc \
+# 8. Fast DDS 3 phone profile. UDP only: shared memory does not work under PRoot.
+COPY configs/fastdds.xml /etc/fastdds/phone.xml
+RUN echo "source /opt/ros/lyrical/setup.bash" >> /root/.bashrc \
     && echo "source /root/uros_ws/install/setup.bash" >> /root/.bashrc \
-    && echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /root/.bashrc \
+    && echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> /root/.bashrc \
     && echo "export ROS_DOMAIN_ID=156" >> /root/.bashrc \
-    && echo "export ROS_LOCALHOST_ONLY=0" >> /root/.bashrc
+    && echo "export ROS_LOCALHOST_ONLY=0" >> /root/.bashrc \
+    && echo "export FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml" >> /root/.bashrc \
+    && echo "export LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so" >> /root/.bashrc
 
 CMD ["/bin/bash"]

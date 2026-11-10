@@ -1,7 +1,7 @@
 <div align="center">
 
-[![ROS 2](https://img.shields.io/badge/ROS_2-Jazzy_Jalisco-blue.svg)](https://docs.ros.org/en/jazzy/)
-[![Platform](https://img.shields.io/badge/platform-Ubuntu_24.04_Noble-orange.svg)](https://ubuntu.com/)
+[![ROS 2](https://img.shields.io/badge/ROS_2-Lyrical_Luth-blue.svg)](https://docs.ros.org/en/lyrical/)
+[![Platform](https://img.shields.io/badge/platform-Ubuntu_26.04_Resolute-orange.svg)](https://ubuntu.com/)
 [![Architecture](https://img.shields.io/badge/architecture-ARM64_aarch64-green.svg)](https://arm.com)
 [![Mode](https://img.shields.io/badge/mode-Headless_Server-brightgreen.svg)](#-key-features)
 [![Release](https://img.shields.io/badge/release-v1.1.0-brightgreen.svg)](https://github.com/botforge-robotics/ros2_android/releases)
@@ -34,7 +34,7 @@
 
 ## 🌟 Key Features
 
-- **⚡ 1-Click Provisioning**: Automated download and rootless extraction of Ubuntu 24.04 (Noble) + ROS 2 Jazzy + Dropbear SSH in minutes. Zero root required!
+- **⚡ 1-Click Provisioning**: Automated download and rootless extraction of Ubuntu 26.04 (Resolute) + ROS 2 Lyrical + Dropbear SSH in minutes. Zero root required!
 - **🚀 Pure Headless Architecture**: All graphical desktop bloat (VNC, X11, Openbox, WebSockets) removed to save ~150-200MB RAM, reduce thermals, prevent background process termination, and optimize battery life.
 - **⚡ Ultra-Fast Graph Introspection (< 1s)**: Built-in CNode accelerator executing `ros2 topic list`, `ros2 node list`, and `ros2 service list` in under 1 second (5x faster than standard mobile CLI).
 - **📱 Hardware Sensor Hub (Bridged to ROS 2)**:
@@ -105,9 +105,9 @@ ssh root@<phone-ip> -p 2224
 *(Find your phone's IP address displayed at the top of the app's Dashboard screen, e.g., `192.168.0.152`).*
 
 ### ROS 2 Inside the Phone
-The guest environment automatically sources ROS 2 Jazzy. If opening a fresh non-login subshell:
+The guest environment automatically sources ROS 2 Lyrical. If opening a fresh non-login subshell:
 ```bash
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/lyrical/setup.bash
 export ROS_DOMAIN_ID=156
 ```
 
@@ -121,7 +121,7 @@ ros2 node list
 
 ## 🌐 ROS 2 Communication from Remote PC
 
-By default, Rosdroid operates on **`ROS_DOMAIN_ID=156`** using **ROS 2 Jazzy**.
+By default, Rosdroid operates on **`ROS_DOMAIN_ID=156`** using **ROS 2 Lyrical**.
 
 ### 1. 1-Step Setup on PC (Recommended)
 In the repository root on your Linux PC, run:
@@ -130,9 +130,9 @@ source source_pc.sh
 ```
 
 This script automatically:
-- Sources `/opt/ros/jazzy/setup.bash`
+- Sources `/opt/ros/lyrical/setup.bash`
 - Sets `export ROS_DOMAIN_ID=156`
-- Configures `FASTRTPS_DEFAULT_PROFILES_FILE=fastdds_pc.xml` (restricting DDS discovery to your active Wi-Fi interface and adding the phone's static IP and subnet broadcast locators)
+- Exports `RMW_IMPLEMENTATION=rmw_fastrtps_cpp` and `FASTDDS_DEFAULT_PROFILES_FILE=fastdds_pc.xml` (UDP on the Wi-Fi interface, with the phone as an initial peer)
 - Resets the `ros2 daemon`
 
 ### 2. Verify Topics from PC

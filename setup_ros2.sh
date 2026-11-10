@@ -28,7 +28,8 @@ info_message() {
 }
 
 
-export ROS_DISTRO=${ROS_DISTRO:-jazzy}
+export ROS_DISTRO=${ROS_DISTRO:-lyrical}
+export CMAKE_POLICY_VERSION_MINIMUM=${CMAKE_POLICY_VERSION_MINIMUM:-3.5}
 
 # Setup ROS 2
 info_message "Setting up ROS 2 $ROS_DISTRO..."
@@ -110,8 +111,8 @@ git clone https://github.com/botforge-robotics/rio_ros2.git || error_exit "Faile
 
 #install dependencies
 info_message "Installing dependencies..."
-apt-get install python3-pip -y || error_exit "Failed to install python3-pip"
-pip install opencv-python aiortc aiohttp_cors groq aiohttp || error_exit "Failed to install dependencies"
+apt-get install python3-pip python3-opencv python3-aiohttp -y || error_exit "Failed to install python3 packages"
+pip3 install --break-system-packages aiortc aiohttp_cors groq || error_exit "Failed to install Python dependencies"
 
 # info_message "Installing ollama..."
 # curl -fsSL https://ollama.com/install.sh | sh || error_exit "Failed to install ollama"
@@ -134,25 +135,31 @@ info_message "Building RIO packages..."
 colcon build || error_exit "Failed to build RIO packages"
 source install/setup.bash || error_exit "Failed to source RIO setup"
 
-#update and install rmw cyclonedds
-info_message "Updating and installing rmw cyclonedds..."
-apt update && apt install ros-$ROS_DISTRO-rmw-cyclonedds-cpp -y || error_exit "Failed to install rmw cyclonedds"
+# Fast DDS 3 is the default RMW on Lyrical. Install it explicitly so a minimal image still has it.
+info_message "Installing Fast DDS RMW..."
+apt update && apt install ros-$ROS_DISTRO-rmw-fastrtps-cpp -y || error_exit "Failed to install rmw_fastrtps_cpp"
 
 # Source all environments
 source /opt/ros/$ROS_DISTRO/setup.bash || error_exit "Failed to source ROS 2 environment"
 source ~/uros_ws/install/setup.bash || error_exit "Failed to source Micro-ROS environment"
 source ~/rio_ws/install/setup.bash || error_exit "Failed to source RIO environment"
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export ROS_DOMAIN_ID=156
 export ROS_LOCALHOST_ONLY=0
+if [ -f /etc/fastdds/phone.xml ]; then
+    export FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml
+fi
 
 # Add environment sources to .bashrc
 info_message "Adding environment sources to .bashrc..."
 echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc || error_exit "Failed to add ROS 2 source to .bashrc"
 echo "source ~/uros_ws/install/setup.bash" >> ~/.bashrc || error_exit "Failed to add Micro-ROS source to .bashrc"
 echo "source ~/rio_ws/install/setup.bash" >> ~/.bashrc || error_exit "Failed to add RIO source to .bashrc"
-echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc || error_exit "Failed to add RMW_IMPLEMENTATION to .bashrc"
+echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> ~/.bashrc || error_exit "Failed to add RMW_IMPLEMENTATION to .bashrc"
 echo "export ROS_DOMAIN_ID=156" >> ~/.bashrc || error_exit "Failed to add ROS_DOMAIN_ID to .bashrc"
 echo "export ROS_LOCALHOST_ONLY=0" >> ~/.bashrc || error_exit "Failed to add ROS_LOCALHOST_ONLY to .bashrc"
+if [ -f /etc/fastdds/phone.xml ]; then
+    echo "export FASTDDS_DEFAULT_PROFILES_FILE=/etc/fastdds/phone.xml" >> ~/.bashrc || error_exit "Failed to add Fast DDS profile to .bashrc"
+fi
 
-info_message "Installation complete! You can now start the ROS 2 $ROS_DISTRO environment with CycloneDDS as the middleware and domain ID 156."
+info_message "Installation complete! You can now start the ROS 2 $ROS_DISTRO environment with Fast DDS and domain ID 156."

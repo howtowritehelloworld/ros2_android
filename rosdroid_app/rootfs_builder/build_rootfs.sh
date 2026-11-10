@@ -3,10 +3,10 @@ set -e
 
 # Configuration
 IMAGE_NAME="rosdroid-rootfs-builder:arm64"
-OUTPUT_TAR="rosdroid-ubuntu24-jazzy-arm64.tar.gz"
+OUTPUT_TAR="rosdroid-ubuntu26-lyrical-arm64.tar.gz"
 
 echo "=========================================================="
-echo " Building Rosdroid Ubuntu 24.04 + ROS 2 Jazzy Rootfs"
+echo " Building Rosdroid Ubuntu 26.04 + ROS 2 Lyrical Rootfs"
 echo "=========================================================="
 
 # Check for docker

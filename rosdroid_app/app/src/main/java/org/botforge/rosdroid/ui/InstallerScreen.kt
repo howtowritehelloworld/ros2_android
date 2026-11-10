@@ -29,7 +29,7 @@ fun InstallerScreen(
     val scope = rememberCoroutineScope()
     var installState by remember { mutableStateOf<InstallState>(InstallState.Idle) }
     var isInstalled by remember { mutableStateOf(installer.isInstalled()) }
-    val defaultUrl = "https://raw.githubusercontent.com/AndronixApp/AndronixOrigin/master/Rootfs/Ubuntu22/jammy-arm64.tar.gz"
+    val defaultUrl = "https://github.com/howtowritehelloworld/ros2_android/releases/latest/download/rosdroid-ubuntu26-lyrical-arm64.tar.gz"
 
     val scrollState = rememberScrollState()
 
@@ -79,7 +79,7 @@ fun InstallerScreen(
 
                 Text(
                     text = if (isInstalled) {
-                        "Your Ubuntu Linux and ROS 2 Jazzy environment is initialized. You can launch your robot companion now."
+                        "Your Ubuntu Linux and ROS 2 Lyrical environment is initialized. You can launch your robot companion now."
                     } else {
                         "Convert this Android phone into a high-performance ROS 2 Robotics Companion Computer with onboard multi-camera vision, 200 Hz IMU fusion, micro-ROS, and remote web desktop."
                     },
@@ -99,7 +99,7 @@ fun InstallerScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         SetupCheckItem(Icons.Default.Terminal, "Ubuntu Linux (PRoot rootless container)")
-                        SetupCheckItem(Icons.Default.SmartToy, "ROS 2 Jazzy Core & CycloneDDS")
+                        SetupCheckItem(Icons.Default.SmartToy, "ROS 2 Lyrical Core & Fast DDS")
                         SetupCheckItem(Icons.Default.Usb, "Micro-ROS Agent (ESP32 USB Serial OTG)")
                         SetupCheckItem(Icons.Default.Sensors, "Sensor Hub (200Hz IMU, Cameras, Mic, GPS, Light)")
                         SetupCheckItem(Icons.Default.Fingerprint, "Biometric Face ID / Fingerprint Auth Services")

@@ -11,7 +11,7 @@ This guide provides deep technical documentation for developers, robotics engine
   - [1. Native Android Application Layer](#1-native-android-application-layer)
   - [2. Native C++ & JNI Layer](#2-native-c--jni-layer)
   - [3. PRoot Guest Container Layer](#3-proot-guest-container-layer)
-  - [4. ROS 2 Jazzy & DDS Subsystem](#4-ros-2-jazzy--dds-subsystem)
+  - [4. ROS 2 Lyrical & DDS Subsystem](#4-ros-2-lyrical--dds-subsystem)
 - [Network Interface Hook (`patch_getifaddrs.c`)](#network-interface-hook-patch_getifaddrsc)
 - [USB OTG Micro-ROS Bridge Subsystem](#usb-otg-micro-ros-bridge-subsystem)
 - [Building & Packaging the Rootfs](#building--packaging-the-rootfs)
@@ -46,14 +46,14 @@ Rosdroid uses a four-tier architecture designed to run real-time robotics withou
 └──────────────────┬─────────────────────────────────────────────────────┘
                    │ PTRACE / PRoot Sandboxing (Zero Root Required)
 ┌──────────────────▼─────────────────────────────────────────────────────┐
-│ 3. Guest User Space (Headless Ubuntu Server 24.04 LTS Noble)           │
+│ 3. Guest User Space (Headless Ubuntu Server 26.04 LTS Resolute)        │
 │    • Dropbear Multi-Port SSH (Port 2222: robot, Port 2224: root)       │
-│    • /etc/profile.d/ros.sh (Jazzy environment + CycloneDDS settings)  │
+│    • /etc/profile.d/ros.sh (Lyrical environment + Fast DDS settings)  │
 │    • micro_ros_agent (UDP4 port 8888)                                  │
 └──────────────────┬─────────────────────────────────────────────────────┘
-                   │ Cyclone DDS Multicast & Direct Peer Unicast
+                   │ Fast DDS UDP & Direct Peer Unicast
 ┌──────────────────▼─────────────────────────────────────────────────────┐
-│ 4. ROS 2 Jazzy Core Node (/rosdroid_robot)                             │
+│ 4. ROS 2 Lyrical Core Node (/rosdroid_robot)                           │
 │    • Sensor Publishers: /imu/data, /battery, /camera/*, /gps, /tof     │
 │    • Actuator Subscribers: /torch, /cmd_vel, /expression               │
 └────────────────────────────────────────────────────────────────────────┘
@@ -79,9 +79,9 @@ Rosdroid uses a four-tier architecture designed to run real-time robotics withou
 - **`PRootManager.kt`**: Executes the sandboxed guest container using `libproot.so`. Binds `/dev`, `/proc`, `/sys`, and sets up Android-compatible environment variables (`TMPDIR`, `LD_PRELOAD`, `PATH`).
 - **`RemoteAccessManager.kt`**: Manages Dropbear SSH daemons on ports `2222` (`rosdroid`) and `2224` (`root`). Generates host keys and verifies process health.
 
-### 4. ROS 2 Jazzy & DDS Subsystem
+### 4. ROS 2 Lyrical & DDS Subsystem
 - **Core Node**: `/rosdroid_robot` running inside PRoot.
-- **DDS Middleware**: Eclipse Cyclone DDS (`rmw_cyclonedds_cpp`).
+- **DDS Middleware**: Fast DDS 3 (`rmw_fastrtps_cpp`).
 - **Daemon Configuration**: `use_daemon = False` is enforced in `ros2cli` strategies to prevent daemon crashes in PRoot environments.
 
 ---
@@ -89,11 +89,11 @@ Rosdroid uses a four-tier architecture designed to run real-time robotics withou
 ## Network Interface Hook (`patch_getifaddrs.c`)
 
 ### The Problem
-Android restricts access to `/proc/net/` and netlink routing sockets for non-root apps via strict SELinux policies. When Cyclone DDS calls `getifaddrs()`, glibc attempts a netlink socket query, resulting in `getifaddrs(): Permission denied` or an empty interface list.
+Android restricts access to `/proc/net/` and netlink routing sockets for non-root apps via strict SELinux policies. When Fast DDS calls `getifaddrs()`, glibc attempts a netlink socket query, resulting in `getifaddrs(): Permission denied` or an empty interface list.
 
 ### The Solution
 `patch_getifaddrs.so` intercepts `getifaddrs()` calls via `dlsym(RTLD_NEXT, "getifaddrs")` and `LD_PRELOAD`.
-1. It reads `/etc/cyclonedds/ifaddrs.txt` (written dynamically by the Android app with the current Wi-Fi IP).
+1. It reads `/etc/fastdds/ifaddrs.txt` (written dynamically by the Android app with the current Wi-Fi IP).
 2. It builds synthetic `struct ifaddrs` linked lists with the `wlan0` and `lo` network interfaces.
 3. It intercepts `open()`, `stat()`, and `lstat()` calls that return `ENOSYS` in PRoot sandboxes, converting them to `ENOENT` to prevent glibc/Python crashes.
 
@@ -111,16 +111,16 @@ The USB bridge enables zero-driver communication with embedded motor controllers
 
 ## Building & Packaging the Rootfs
 
-To regenerate the headless Ubuntu 24.04 rootfs:
+To regenerate the headless Ubuntu 26.04 rootfs:
 ```bash
 cd rosdroid_app/rootfs_builder
 ./build_rootfs.sh
 ```
 This runs a multi-stage Docker build that:
-1. Bootstraps an `arm64` Ubuntu 24.04 Noble base.
-2. Installs ROS 2 Jazzy (`ros-jazzy-ros-base`, `ros-jazzy-rmw-cyclonedds-cpp`, `ros-jazzy-micro-ros-agent`).
+1. Bootstraps an `arm64` Ubuntu 26.04 Resolute base.
+2. Installs ROS 2 Lyrical (`ros-lyrical-ros-base`, `ros-lyrical-rmw-fastrtps-cpp`) and builds the micro-ROS agent from the `lyrical` branch.
 3. Compiles `patch_getifaddrs.so` and configures Dropbear SSH.
-4. Exports a compressed `ubuntu-jazzy-headless-arm64.tar.gz`.
+4. Exports a compressed `rosdroid-ubuntu26-lyrical-arm64.tar.gz`.
 
 ---
 

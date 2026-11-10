@@ -65,8 +65,8 @@ jobs:
             Welcome to the official release of **Rosdroid: Headless ROS 2 Android Platform**!
             
             ### 🌟 Key Highlights
-            - **ROS 2 Jazzy Jalisco**: Pre-configured with Eclipse Cyclone DDS (`rmw_cyclonedds_cpp`).
-            - **Headless Ubuntu Server 24.04 (Noble)**: Zero VNC/GUI bloat for maximum RAM and CPU efficiency.
+            - **ROS 2 Lyrical Luth**: Pre-configured with Fast DDS 3 (`rmw_fastrtps_cpp`).
+            - **Headless Ubuntu Server 26.04 (Resolute)**: Zero VNC/GUI bloat for maximum RAM and CPU efficiency.
             - **Dropbear SSH Server**: Development user (`robot:rosdroid` on port 2222) and admin user (`root:rosdroid` on port 2224).
             - **Real-Time Sensor Hub**: 9-DOF IMU fused with native C++ Madgwick filter (`/imu/data`), dual hardware cameras (`/camera/*`), battery telemetry (`/battery`), physical LED torch control (`/torch`), and GPS (`/gps`).
             - **Micro-ROS USB-C Bridge**: Direct OTG serial relay to ESP32 / STM32 motor controllers (`micro_ros_agent` UDP 8888).

@@ -1,7 +1,7 @@
 <div align="center">
 
-[![ROS 2](https://img.shields.io/badge/ROS_2-Jazzy_Jalisco-blue.svg)](https://docs.ros.org/en/jazzy/)
-[![Platform](https://img.shields.io/badge/platform-Ubuntu_24.04_Noble-orange.svg)](https://ubuntu.com/)
+[![ROS 2](https://img.shields.io/badge/ROS_2-Lyrical_Luth-blue.svg)](https://docs.ros.org/en/lyrical/)
+[![Platform](https://img.shields.io/badge/platform-Ubuntu_26.04_Resolute-orange.svg)](https://ubuntu.com/)
 [![Architecture](https://img.shields.io/badge/architecture-ARM64_aarch64-green.svg)](https://arm.com)
 [![Mode](https://img.shields.io/badge/mode-Headless_Server-brightgreen.svg)](#-why-headless-server)
 [![Release](https://img.shields.io/badge/release-v1.1.0-brightgreen.svg)](https://github.com/botforge-robotics/ros2_android/releases)
@@ -10,7 +10,7 @@
 
 # 🤖 Rosdroid: Headless ROS 2 Android Robot Platform
 
-*Transform any standard Android smartphone into a high-performance, power-efficient robotics companion computer running a headless Ubuntu 24.04 Server, ROS 2 Jazzy Jalisco, Dropbear SSH, Micro-ROS, and a real-time sensor hub.*
+*Transform any standard Android smartphone into a high-performance, power-efficient robotics companion computer running a headless Ubuntu 26.04 Server, ROS 2 Lyrical Luth, Dropbear SSH, Micro-ROS, and a real-time sensor hub.*
 
 [**Explore Documentation**](DEVELOPER.md) • [**Contributing Guide**](CONTRIBUTING.md) • [**Code of Conduct**](CODE_OF_CONDUCT.md) • [**Report Bug**](.github/ISSUE_TEMPLATE/bug_report.md)
 </div>
@@ -45,8 +45,8 @@
 Rosdroid turns standard Android smartphones (`arm64-v8a`) into an all-in-one robotics brain, replacing a Raspberry Pi 5 + IMU/camera breakout boards + battery power bank + display + LTE/Wi-Fi modem.
 
 - **Zero Root Required**: Uses a lightweight sandboxed **PRoot** guest filesystem.
-- **Headless Ubuntu Server 24.04 (Noble)**: Pure server configuration without graphical desktop bloat for maximum performance and stability.
-- **ROS 2 Jazzy Jalisco**: Pre-configured with **Eclipse Cyclone DDS** (`rmw_cyclonedds_cpp`) and custom `patch_getifaddrs.so`.
+- **Headless Ubuntu Server 26.04 (Resolute)**: Pure server configuration without graphical desktop bloat for maximum performance and stability.
+- **ROS 2 Lyrical Luth**: Pre-configured with **Fast DDS 3** (`rmw_fastrtps_cpp`) and custom `patch_getifaddrs.so`.
 - **Fast Remote Access**: Multi-port Dropbear SSH (`rosdroid:rosdroid` on port 2222, `root:rosdroid` on port 2224) plus an in-app interactive multi-terminal console.
 - **Ultra-Fast Graph Introspection**: Built-in CNode accelerator executing `ros2 topic list`, `ros2 node list`, and `ros2 service list` in under 1 second.
 - **Rich Hardware Sensor Hub**: Dual cameras (hardware JPEG compression), 9-DOF IMU fused with a native C++ Madgwick AHRS filter, physical torch LED control, battery telemetry, GPS, ambient light, and speech recognition with wake word.
@@ -60,7 +60,7 @@ By installing Rosdroid on an Android phone, you eliminate hundreds of dollars in
 
 | Expensive External Hardware | Replaced By Built-in Phone Feature | ROS 2 Output Topic |
 |---|---|---|
-| **Single Board Computer** *(Raspberry Pi 5 / Jetson, $80-$150)* | **Octa-Core ARM64 CPU + PRoot Ubuntu 24.04** | Core ROS 2 Node (`/rosdroid_robot`) |
+| **Single Board Computer** *(Raspberry Pi 5 / Jetson, $80-$150)* | **Octa-Core ARM64 CPU + PRoot Ubuntu 26.04** | Core ROS 2 Node (`/rosdroid_robot`) |
 | **Dual Camera Modules** *(Pi Cam V3 / Webcams, $50-$80)* | **High-Res Front & Back Cameras (Hardware JPEG)** | `/camera/front/image_raw/compressed`<br>`/camera/back/image_raw/compressed` |
 | **9-DOF IMU Breakout** *(BNO055 / MPU6050, $15-$35)* | **Built-in IMU fused with Native C++ Madgwick** | `/imu/data` *(quaternion orientation & rates)* |
 | **Power Bank / UPS Battery Hat** *($30-$50)* | **Built-in 4000-5000 mAh Rechargeable Battery** | `/battery` *(voltage, %, charge status)* |
@@ -70,7 +70,7 @@ By installing Rosdroid on an Android phone, you eliminate hundreds of dollars in
 | **Ambient Light Sensor** *(BH1750, $8)* | **Built-in Ambient Light Sensor** | `/illuminance` *(`sensor_msgs/Illuminance`)* |
 | **ToF / Ultrasonic Distance Sensor** *(HC-SR04, $8)* | **Built-in Time-of-Flight / Proximity Sensor** | `/tof` *(`sensor_msgs/Range`)* |
 | **Microphone Array & Speaker** *($25)* | **Stereo Microphones & Loudspeaker** | Speech-to-Text, Wake Word, TTS |
-| **Wi-Fi 6 & 4G/5G LTE Hat** *($60)* | **Built-in Wi-Fi & Cellular Modem** | Native ROS 2 Cyclone DDS over Wi-Fi |
+| **Wi-Fi 6 & 4G/5G LTE Hat** *($60)* | **Built-in Wi-Fi & Cellular Modem** | Native ROS 2 Fast DDS over Wi-Fi |
 | **USB Serial Converter** *($10)* | **USB-C OTG Micro-ROS Bridge** | Relays ESP32/STM32 serial to UDP 8888 |
 
 ---
@@ -121,10 +121,10 @@ Traditional attempts to run Linux on Android often install heavy desktop environ
                   │                      │ Unix Socket / TCP     │
                   │   ┌──────────────────▼───────────────────┐   │
                   │   │ Headless PRoot Guest (Ubuntu Server) │   │
-                  │   │  • ROS 2 Jazzy (`/rosdroid_robot`)   │   │
+                  │   │  • ROS 2 Lyrical (`/rosdroid_robot`)   │   │
                   │   │  • Dropbear SSH (Port 2222, 2224)    │   │
                   │   │  • micro_ros_agent (UDP 8888)        │   │
-                  │   │  • Eclipse Cyclone DDS + patch hook  │   │
+                  │   │  • Eclipse Fast DDS + patch hook  │   │
                   │   │  • Fast CNode Graph Introspection    │   │
                   │   └──────────────────────────────────────┘   │
                   └──────────────────────┬───────────────────────┘
@@ -133,7 +133,7 @@ Traditional attempts to run Linux on Android often install heavy desktop environ
             │                                                         │
  ┌──────────▼──────────┐                                   ┌──────────▼──────────┐
  │    Remote PC CLI    │                                   │  Microcontroller    │
- │ • ROS 2 Jazzy CLI   │                                   │ • ESP32 / STM32     │
+ │ • ROS 2 Lyrical CLI   │                                   │ • ESP32 / STM32     │
  │ • SSH Shell (2222)  │                                   │ • USB-C OTG Cable   │
  │ • RViz2 & rqt       │                                   │ • micro_ros_agent   │
  │ • Topics & Services │                                   │ • Motor Controller  │
@@ -216,9 +216,9 @@ The app includes a fully-featured interactive terminal console on the **Console 
 
 Standard `ros2 topic list` and `ros2 node list` commands take over 5 seconds on mobile ARM64 devices due to Python entry-point reflection (`importlib.metadata`) scanning 19 CLI extensions on every invocation inside PRoot.
 
-Rosdroid includes a **native CNode graph introspection accelerator** inside `/opt/ros/jazzy/bin/ros2`:
+Rosdroid includes a **native CNode graph introspection accelerator** inside `/opt/ros/lyrical/bin/ros2`:
 - Directly binds to the compiled C++ ROS 2 library (`_rclpy_pybind11`).
-- Queries the active Cyclone DDS graph without initializing Python CLI plugin trees.
+- Queries the active Fast DDS graph without initializing Python CLI plugin trees.
 - Reduces query time from **5.1 seconds down to ~0.9 seconds** (over **5x faster**).
 - Full transparent fallback preserves complete compatibility for all other ROS 2 tools and `--help` actions.
 
@@ -233,7 +233,7 @@ Rosdroid includes a **native CNode graph introspection accelerator** inside `/op
 
 ## 🌐 ROS 2 Communication & PC Integration
 
-The phone runs on **`ROS_DOMAIN_ID=156`** with **ROS 2 Jazzy**.
+The phone runs on **`ROS_DOMAIN_ID=156`** with **ROS 2 Lyrical**.
 
 ### 1-Step PC Setup (`source_pc.sh`)
 Because PC Linux environments often have Docker bridge networks (`172.17.x.x`, `172.18.x.x`) that trap DDS multicast packets, this repository provides a dedicated Fast-DDS network profile ([`fastdds_pc.xml`](fastdds_pc.xml)) and helper script ([`source_pc.sh`](source_pc.sh)).
@@ -244,9 +244,9 @@ source source_pc.sh
 ```
 
 This automatically:
-- Sources `/opt/ros/jazzy/setup.bash`
-- Exports `ROS_DOMAIN_ID=156`
-- Configures Fast-DDS to bind cleanly to your active Wi-Fi interface and direct peer locators to the phone
+- Sources `/opt/ros/lyrical/setup.bash`
+- Exports `ROS_DOMAIN_ID=156` and `RMW_IMPLEMENTATION=rmw_fastrtps_cpp`
+- Points Fast DDS 3 at `fastdds_pc.xml`, binding UDP to the Wi-Fi interface and adding the phone as an initial peer
 - Restarts the `ros2 daemon`
 
 ---
@@ -346,7 +346,7 @@ You can connect an ESP32, Teensy, Arduino, or STM32 motor driver board directly 
    ```
 
 ### `getifaddrs(): Permission denied`
-Android PRoot cannot read network interfaces through netlink sockets due to SELinux restrictions. Rosdroid includes `patch_getifaddrs.so`, preloaded via `LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so`, which provides interface information to Cyclone DDS seamlessly.
+Android PRoot cannot read network interfaces through netlink sockets due to SELinux restrictions. Rosdroid includes `patch_getifaddrs.so`, preloaded via `LD_PRELOAD=/usr/local/lib/patch_getifaddrs.so`, which provides interface information to Fast DDS seamlessly.
 
 ### `ros2 node list` hangs or crashes
 In PRoot sandboxes, the background ROS 2 daemon process cannot communicate via shared memory sockets. Rosdroid configures `use_daemon = False` in the ROS 2 CLI and uses the fast CNode accelerator to ensure all CLI queries execute directly in under 1 second without daemon reliance.
