@@ -51,6 +51,8 @@ RUN mkdir -p /root/uros_ws/src \
     && . /opt/ros/lyrical/setup.sh \
     && colcon build \
     && . install/setup.sh \
+    && sed -i 's/--os=ubuntu:noble/--os=ubuntu:resolute/' \
+         $(grep -rl -- '--os=ubuntu:noble' /root/uros_ws/install/micro_ros_setup) \
     && ros2 run micro_ros_setup create_agent_ws.sh \
     && ros2 run micro_ros_setup build_agent.sh \
     && rm -rf /root/uros_ws/build /root/uros_ws/log
@@ -61,8 +63,9 @@ RUN gcc -shared -fPIC -o /usr/local/lib/patch_getifaddrs.so /tmp/patch_getifaddr
     && echo "/usr/local/lib/patch_getifaddrs.so" > /etc/ld.so.preload \
     && rm /tmp/patch_getifaddrs.c
 
-# 7. Create default rosdroid user
-RUN useradd -m -s /bin/bash -u 1000 rosdroid \
+# 7. Create default rosdroid user. Ubuntu 26.04 images already use UID 1000 for "ubuntu".
+RUN if id ubuntu >/dev/null 2>&1; then userdel -r ubuntu || userdel ubuntu; fi \
+    && useradd -m -s /bin/bash -u 1000 rosdroid \
     && echo "rosdroid:rosdroid" | chpasswd \
     && echo "root:rosdroid" | chpasswd \
     && echo "rosdroid ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
